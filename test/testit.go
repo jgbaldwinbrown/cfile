@@ -22,7 +22,16 @@ func ReadFile(path string) error {
 	return nil
 }
 
+func SeekReadFile(path string, offset int64) error {
+	fp := cfile.Open(path, "r")
+	fp.Seek(offset, io.SeekStart)
+	io.Copy(os.Stdout, fp)
+	cfile.Close(fp)
+	return nil
+}
+
 func main() {
 	WriteFile("temp.txt")
 	ReadFile("temp.txt")
+	SeekReadFile("temp.txt", 2)
 }
