@@ -51,6 +51,34 @@ func (f CFile) Write(p []byte) (n int, err error) {
 	return n, nil
 }
 
+func toWhence(whence int) C.int {
+	switch whence {
+	case io.SeekStart:
+		return C.SEEK_SET
+	case io.SeekEnd:
+		return C.SEEK_END
+	case io.SeekCurrent:
+		return C.SEEK_CUR
+	default:
+		panic(fmt.Errorf("toWhence: invalid whence %v", whence))
+		return -1
+	}
+}
+
+func (f CFile) Seek(offset int64, whence int) (int64, error) {
+	file := f.Fp
+	cWhence := toWhence(whence)
+	e := C.fseek(file, C.long(offset), cWhence);
+	if e != 0 {
+		return 0, IntErr(e)
+	}
+	pos := C.ftell(file)
+	if pos == -1 {
+		return 0, IntErr(pos)
+	}
+	return int64(pos), nil
+}
+
 func Open(path string, perm string) CFile {
 	cpath := C.CString(path)
 	cperm := C.CString(perm)
