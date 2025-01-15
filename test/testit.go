@@ -4,9 +4,14 @@ import (
 	"io"
 	"fmt"
 	"os"
+	"unsafe"
 
 	"github.com/jgbaldwinbrown/cfile/pkg"
 )
+
+//#include <stdio.h>
+//#include <stdlib.h>
+import "C"
 
 func WriteFile(path string) error {
 	fp := cfile.Open(path, "w")
@@ -30,8 +35,19 @@ func SeekReadFile(path string, offset int64) error {
 	return nil
 }
 
+func ReadFile2(path string) error {
+	cstr := C.CString(path)
+	defer C.free(unsafe.Pointer(cstr))
+	rstr := C.CString("r")
+	defer C.free(unsafe.Pointer(rstr))
+	cfp := C.fopen(cstr, rstr)
+	io.Copy(os.Stdout, cfile.Wrap(unsafe.Pointer(cfp)))
+	return nil
+}
+
 func main() {
 	WriteFile("temp.txt")
 	ReadFile("temp.txt")
 	SeekReadFile("temp.txt", 2)
+	ReadFile2("temp.txt")
 }

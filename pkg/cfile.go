@@ -17,11 +17,11 @@ func (i IntErr) Error() string {
 }
 
 type CFile struct {
-	Fp *C.FILE
+	fp *C.FILE
 }
 
 func (f CFile) Read(p []byte) (n int, err error) {
-	file := f.Fp
+	file := f.fp
 	ptr := unsafe.Pointer(&p[0])
 	nread := C.fread(ptr, 1, C.size_t(len(p)), file)
 	n = int(nread)
@@ -38,7 +38,7 @@ func (f CFile) Read(p []byte) (n int, err error) {
 }
 
 func (f CFile) Write(p []byte) (n int, err error) {
-	file := f.Fp
+	file := f.fp
 	ptr := unsafe.Pointer(&p[0])
 	nwrit := C.fwrite(ptr, 1, C.size_t(len(p)), file)
 	n = int(nwrit)
@@ -66,7 +66,7 @@ func toWhence(whence int) C.int {
 }
 
 func (f CFile) Seek(offset int64, whence int) (int64, error) {
-	file := f.Fp
+	file := f.fp
 	cWhence := toWhence(whence)
 	e := C.fseek(file, C.long(offset), cWhence);
 	if e != 0 {
@@ -85,9 +85,13 @@ func Open(path string, perm string) CFile {
 	fp := C.fopen(cpath, cperm)
 	C.free(unsafe.Pointer(cpath))
 	C.free(unsafe.Pointer(cperm))
-	return CFile{Fp: fp}
+	return CFile{fp: fp}
 }
 
 func Close(fp CFile) {
-	C.fclose(fp.Fp)
+	C.fclose(fp.fp)
+}
+
+func Wrap(fp unsafe.Pointer) CFile {
+	return CFile{fp: (*C.FILE)(fp)}
 }
